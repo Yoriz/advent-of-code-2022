@@ -73,9 +73,6 @@ class Cpu:
     _x: int = dataclasses.field(default=1, init=False)
     _signal_strengths: list[int] = dataclasses.field(default_factory=list, init=False)
 
-    # def __post_init__(self):
-    #     self.start_observing_cycle()
-
     def start_observing_cycle(self) -> None:
         self.clock_circuit.subscribe(self.on_cycle)
 
@@ -107,7 +104,7 @@ class Cpu:
 
     def update_signal_strenght(self) -> None:
         cycle_number = self.clock_circuit.cycle_number
-        cycle_number += 2 # Dont know ? but this makes it work
+        cycle_number += 2  # Dont know ? but this makes it work
         if cycle_number < 20:
             return
         elif cycle_number == 20:
@@ -115,7 +112,6 @@ class Cpu:
             return
         if (cycle_number - 20) % 40 == 0:
             self._signal_strengths.append(cycle_number * self._x)
-
 
     @property
     def has_instructions(self) -> bool:
@@ -129,6 +125,7 @@ class Cpu:
     def signal_strengths(self) -> list[int]:
         return self._signal_strengths
 
+
 @dataclasses.dataclass
 class Crt:
     clock_circuit: ClockCircuit
@@ -136,20 +133,18 @@ class Crt:
     pixels: list[str] = dataclasses.field(default_factory=list)
     pixel: int = dataclasses.field(default=0, init=False)
 
-    # def __post_init__(self):
-    #     # self.start_observing_cycle()
-    #     self.pixels.append("#")
-
     def start_observing_cycle(self) -> None:
         self.clock_circuit.subscribe(self.on_cycle)
 
     def on_cycle(self):
         character = "."
-        print(f"Crt {self.clock_circuit.cycle_number} x: {self.cpu.x}")
-        if self.cpu.x - 1 <= self.pixel <= self.cpu.x:
+        if self.cpu.x - 1 <= self.pixel <= self.cpu.x + 1:
             character = "#"
         self.pixels.append(character)
         self.pixel += 1
+        if self.pixel == 40:
+            self.pixel = 0
+
 
 def part1(filename: str) -> None:
     lines = yield_lines(filename)
@@ -160,19 +155,11 @@ def part1(filename: str) -> None:
         cpu.execute_instruction(instruction)
         while cpu.has_instructions:
             clock_circuit.cycle()
-            if clock_circuit.cycle_number == 220:
-                print("Stopping")
-                break
-        if clock_circuit.cycle_number == 220:
-                print("Stopping")
-                break
 
-    print(cpu)
-    # print(cpu.x)
     print(sum(cpu.signal_strengths))
 
 
-def part2(filename: str) -> None: # Part2 does not work
+def part2(filename: str) -> None:
     lines = yield_lines(filename)
     clock_circuit = ClockCircuit()
     cpu = Cpu(clock_circuit)
@@ -183,18 +170,17 @@ def part2(filename: str) -> None: # Part2 does not work
         cpu.execute_instruction(instruction)
         while cpu.has_instructions:
             clock_circuit.cycle()
-            if clock_circuit.cycle_number == 22:
-                print("Stopping")
-                break
-        if clock_circuit.cycle_number == 22:
-                print("Stopping")
-                break
-    # print(cpu)
-    print(crt.pixels)
+
+    print("".join(crt.pixels[:40]))
+    print("".join(crt.pixels[40:80]))
+    print("".join(crt.pixels[80:120]))
+    print("".join(crt.pixels[120:160]))
+    print("".join(crt.pixels[160:200]))
+    print("".join(crt.pixels[200:240]))
 
 
 def main():
-    # part1(FILENAME)
+    part1(FILENAME)
     part2(FILENAME)
 
 
