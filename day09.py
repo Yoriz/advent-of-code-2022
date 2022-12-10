@@ -16,9 +16,7 @@ class Location:
     x: int = 0
     y: int = 0
 
-    def neightbour_location(
-        self, location_direction: "LocationDirection"
-    ) -> "Location":
+    def neighbour_location(self, location_direction: "LocationDirection") -> "Location":
         other_location: "Location" = location_direction.value
         return Location(self.x + other_location.x, self.y + other_location.y)
 
@@ -48,15 +46,19 @@ location_direction_dict = {
 tail_movement_dict = {
     Location(0, -2): LocationDirection.UP,
     Location(x=-1, y=-2): LocationDirection.UP_RIGHT,
+    Location(x=-2, y=-2): LocationDirection.UP_RIGHT,
     Location(x=-2, y=-1): LocationDirection.UP_RIGHT,
     Location(x=-2, y=0): LocationDirection.RIGHT,
     Location(x=-2, y=1): LocationDirection.DOWN_RIGHT,
+    Location(x=-2, y=2): LocationDirection.DOWN_RIGHT,
     Location(x=-1, y=2): LocationDirection.DOWN_RIGHT,
     Location(0, 2): LocationDirection.DOWN,
     Location(x=1, y=2): LocationDirection.DOWN_LEFT,
+    Location(x=2, y=2): LocationDirection.DOWN_LEFT,
     Location(x=2, y=1): LocationDirection.DOWN_LEFT,
     Location(x=2, y=0): LocationDirection.LEFT,
     Location(x=2, y=-1): LocationDirection.UP_LEFT,
+    Location(x=2, y=-2): LocationDirection.UP_LEFT,
     Location(x=1, y=-2): LocationDirection.UP_LEFT,
 }
 
@@ -72,32 +74,36 @@ def create_location_directions(
 
 @dataclasses.dataclass
 class Rope:
-    head: Location = Location()
-    tail: Location = Location()
-    tail_visited_locations: set[Location] = dataclasses.field(default_factory=set)
+    knot_qty: dataclasses.InitVar[int] = 2
+    tail_visited_locations: set[Location] = dataclasses.field(
+        default_factory=set, init=False
+    )
+    knots: list[Location] = dataclasses.field(default_factory=list, init=False)
 
-    def __post_init__(self):
-        self.add_tail_visited_location()
+    def __post_init__(self, knot_qty):
+        for _ in range(knot_qty):
+            self.knots.append(Location())
 
-    def add_tail_visited_location(self):
-        self.tail_visited_locations.add(self.tail)
+        self.update_tail_visited_location()
 
-    def move_head_location(self, location_direction: LocationDirection) -> None:
-        self.head = self.head.neightbour_location(location_direction)
-        self.update_tail_location()
+    def update_tail_visited_location(self):
+        self.tail_visited_locations.add(self.knots[-1])
 
-    def move_tail_location(self, location_direction: LocationDirection) -> None:
-        self.tail = self.tail.neightbour_location(location_direction)
-        self.add_tail_visited_location()
+    def move_head_knot(self, location_direction: LocationDirection) -> None:
+        self.knots[0] = self.knots[0].neighbour_location(location_direction)
+        self.update_knot_locations()
 
-    def tail_relationship_location(self) -> Location:
-        return self.head.relationship(self.tail)
+    def update_knot_locations(self) -> None:
 
-    def update_tail_location(self) -> None:
-        tail_relationship = self.tail_relationship_location()
-        location_direction = tail_movement_dict.get(self.tail_relationship_location())
-        if location_direction:
-            self.move_tail_location(location_direction)
+        for index, _ in enumerate(self.knots[:-1]):
+            knot_relationship = self.knots[index].relationship(self.knots[index + 1])
+            location_direction = tail_movement_dict.get(knot_relationship)
+            if location_direction:
+                self.knots[index + 1] = self.knots[index + 1].neighbour_location(
+                    location_direction
+                )
+
+        self.update_tail_visited_location()
 
     def qty_positions_tail_visited(self) -> int:
         return len(self.tail_visited_locations)
@@ -108,22 +114,22 @@ def part1(filename: str) -> None:
     location_directions = create_location_directions(lines)
     rope = Rope()
     for index, location_direction in enumerate(location_directions):
-        # if index == 2:
-        #     break
-        # print(location_direction)
-        rope.move_head_location(location_direction)
+        rope.move_head_knot(location_direction)
     print(rope.qty_positions_tail_visited())
-    # print(rope)
 
 
 def part2(filename: str) -> None:
     lines = yield_lines(filename)
-    # Part2 not yet done
+    location_directions = create_location_directions(lines)
+    rope = Rope(10)
+    for index, location_direction in enumerate(location_directions):
+        rope.move_head_knot(location_direction)
+    print(rope.qty_positions_tail_visited())
 
 
 def main():
     part1(FILENAME)
-    # part2(FILENAME)
+    part2(FILENAME)
 
 
 if __name__ == "__main__":
