@@ -1,7 +1,7 @@
 import dataclasses
+import enum
 import itertools
 import typing
-import enum
 
 FILENAME = "day13_data.txt"
 
@@ -49,6 +49,7 @@ class PacketOrderState(enum.Enum):
     WRONG = enum.auto()
     UNDECIDED = enum.auto()
 
+
 @dataclasses.dataclass
 class PacketPair:
     left: list
@@ -65,6 +66,8 @@ class PacketPair:
                     return PacketOrderState.RIGHT
                 elif left > right:
                     return PacketOrderState.WRONG
+                elif left == right:
+                    continue
             elif left == "Runout":
                 return PacketOrderState.RIGHT
             elif right == "Runout":
@@ -74,7 +77,10 @@ class PacketPair:
                 if not left and not right:
                     continue
                 packet_pair = PacketPair(left, right)
-                return packet_pair.is_right_order()
+                packet_order_state = packet_pair.is_right_order()
+                if packet_order_state == PacketOrderState.UNDECIDED:
+                    continue
+                return packet_order_state
 
             elif isinstance(left, int) and isinstance(right, list):
                 packet_pair = PacketPair([left], right)
@@ -103,7 +109,7 @@ def part1(filename: str) -> None:
     right_order_pairs_index = []
     for index, packet_pair in enumerate(create_packet_pairs(lines), 1):
         # print(packet_pair)
-        if packet_pair.is_right_order():
+        if packet_pair.is_right_order() == PacketOrderState.RIGHT:
             right_order_pairs_index.append(index)
     print(sum(right_order_pairs_index))
 
@@ -113,7 +119,7 @@ def part2(filename: str) -> None:
 
 
 def main():
-    part1(TEST_FILENAME)
+    part1(FILENAME)
     # part2(TEST_FILENAME)
 
 
