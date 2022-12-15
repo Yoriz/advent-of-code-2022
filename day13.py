@@ -1,6 +1,7 @@
 import dataclasses
 import itertools
 import typing
+import enum
 
 FILENAME = "day13_data.txt"
 
@@ -43,12 +44,17 @@ def create_list_of_lists(line: str) -> list:
     return list_of_lists
 
 
+class PacketOrderState(enum.Enum):
+    RIGHT = enum.auto()
+    WRONG = enum.auto()
+    UNDECIDED = enum.auto()
+
 @dataclasses.dataclass
 class PacketPair:
     left: list
     right: list
 
-    def is_right_order(self) -> bool:
+    def is_right_order(self) -> PacketOrderState:
         print(self)
         for left, right in itertools.zip_longest(
             self.left, self.right, fillvalue="Runout"
@@ -56,13 +62,13 @@ class PacketPair:
             print(left, right)
             if isinstance(left, int) and isinstance(right, int):
                 if left < right:
-                    return True
+                    return PacketOrderState.RIGHT
                 elif left > right:
-                    return False
+                    return PacketOrderState.WRONG
             elif left == "Runout":
-                return True
+                return PacketOrderState.RIGHT
             elif right == "Runout":
-                return False
+                return PacketOrderState.WRONG
 
             elif isinstance(left, list) and isinstance(right, list):
                 if not left and not right:
@@ -78,7 +84,7 @@ class PacketPair:
                 packet_pair = PacketPair(left, [right])
                 return packet_pair.is_right_order()
 
-        return True
+        return PacketOrderState.UNDECIDED
 
 
 def create_packet_pairs(lines: typing.Iterator[str]) -> typing.Iterator[PacketPair]:
