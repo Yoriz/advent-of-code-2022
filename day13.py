@@ -59,23 +59,24 @@ class PacketPair:
                     return True
                 elif left > right:
                     return False
-            elif left == "Runout" and right != "Runout":
+            elif left == "Runout":
                 return True
-            elif right == "Runout" and left != "Runout":
+            elif right == "Runout":
                 return False
+
             elif isinstance(left, list) and isinstance(right, list):
+                if not left and not right:
+                    continue
                 packet_pair = PacketPair(left, right)
-                if not packet_pair.is_right_order():
-                    return False
+                return packet_pair.is_right_order()
 
             elif isinstance(left, int) and isinstance(right, list):
                 packet_pair = PacketPair([left], right)
-                if not packet_pair.is_right_order():
-                    return False
+                return packet_pair.is_right_order()
+
             elif isinstance(left, list) and isinstance(right, int):
                 packet_pair = PacketPair(left, [right])
-                if not packet_pair.is_right_order():
-                    return False
+                return packet_pair.is_right_order()
 
         return True
 
