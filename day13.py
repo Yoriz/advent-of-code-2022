@@ -15,8 +15,12 @@ def create_list_of_lists(line: str) -> list:
     list_of_lists = []
     open_brackets = 0
     inner_line = ""
+    number = ""
     for character in line[1:-1]:
         if character == "," and not inner_line:
+            if number:
+                list_of_lists.append(int(number))
+            number = ""
             continue
         elif character == "," and inner_line:
             inner_line = f"{inner_line}{character}"
@@ -29,10 +33,13 @@ def create_list_of_lists(line: str) -> list:
         elif inner_line:
             inner_line = f"{inner_line}{character}"
         else:
-            list_of_lists.append(int(character))
+            number = f"{number}{character}"
+
         if inner_line and open_brackets == 0:
             list_of_lists.append(create_list_of_lists(inner_line))
             inner_line = ""
+    if number:
+        list_of_lists.append(int(number))
     return list_of_lists
 
 
