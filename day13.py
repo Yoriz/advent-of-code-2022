@@ -1,6 +1,8 @@
 import dataclasses
 import enum
+import functools
 import itertools
+import operator
 import typing
 
 FILENAME = "day13_data.txt"
@@ -44,10 +46,10 @@ def create_list_of_lists(line: str) -> list:
     return list_of_lists
 
 
-class PacketOrderState(enum.Enum):
-    RIGHT = enum.auto()
-    WRONG = enum.auto()
-    UNDECIDED = enum.auto()
+class PacketOrderState(enum.IntEnum):
+    RIGHT = -1
+    UNDECIDED = 0
+    WRONG = 1
 
 
 @dataclasses.dataclass
@@ -56,11 +58,9 @@ class PacketPair:
     right: list
 
     def is_right_order(self) -> PacketOrderState:
-        print(self)
         for left, right in itertools.zip_longest(
             self.left, self.right, fillvalue="Runout"
         ):
-            print(left, right)
             if isinstance(left, int) and isinstance(right, int):
                 if left < right:
                     return PacketOrderState.RIGHT
@@ -84,11 +84,17 @@ class PacketPair:
 
             elif isinstance(left, int) and isinstance(right, list):
                 packet_pair = PacketPair([left], right)
-                return packet_pair.is_right_order()
+                packet_order_state = packet_pair.is_right_order()
+                if packet_order_state == PacketOrderState.UNDECIDED:
+                    continue
+                return packet_order_state
 
             elif isinstance(left, list) and isinstance(right, int):
                 packet_pair = PacketPair(left, [right])
-                return packet_pair.is_right_order()
+                packet_order_state = packet_pair.is_right_order()
+                if packet_order_state == PacketOrderState.UNDECIDED:
+                    continue
+                return packet_order_state
 
         return PacketOrderState.UNDECIDED
 
@@ -104,11 +110,25 @@ def create_packet_pairs(lines: typing.Iterator[str]) -> typing.Iterator[PacketPa
             break
 
 
+def parse_list_of_lists(lines: typing.Iterator[str]) -> typing.Iterator[list]:
+    while True:
+        yield create_list_of_lists(next(lines))
+        yield create_list_of_lists(next(lines))
+        try:
+            next(lines)
+        except StopIteration:
+            break
+
+
+def compare_list_of_lists(left: list, right: list) -> int:
+    packet_pair = PacketPair(left, right)
+    return packet_pair.is_right_order()
+
+
 def part1(filename: str) -> None:
     lines = yield_lines(filename)
     right_order_pairs_index = []
     for index, packet_pair in enumerate(create_packet_pairs(lines), 1):
-        # print(packet_pair)
         if packet_pair.is_right_order() == PacketOrderState.RIGHT:
             right_order_pairs_index.append(index)
     print(sum(right_order_pairs_index))
@@ -116,11 +136,20 @@ def part1(filename: str) -> None:
 
 def part2(filename: str) -> None:
     lines = yield_lines(filename)
+    list_of_lists = list(parse_list_of_lists(lines))
+    divider_packets = [[[2]], [[6]]]
+    list_of_lists.extend(divider_packets)
+    list_of_lists.sort(key=functools.cmp_to_key(compare_list_of_lists))
+    decoder_key_indexs = []
+    for index, item in enumerate(list_of_lists, 1):
+        if item in divider_packets:
+            decoder_key_indexs.append(index)
+    print(operator.mul(*decoder_key_indexs))
 
 
 def main():
     part1(FILENAME)
-    # part2(TEST_FILENAME)
+    part2(FILENAME)
 
 
 if __name__ == "__main__":
