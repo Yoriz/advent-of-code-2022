@@ -3,10 +3,7 @@ import dataclasses
 import enum
 import typing
 
-TEST_FILENAME = (
-    r"C:\Users\Dave\Documents\VsWorkspace\advent_of_code\year2022\day12_testdata.txt"
-)
-FILENAME = r"C:\Users\Dave\Documents\VsWorkspace\advent_of_code\year2022\day12_data.txt"
+FILENAME = "day12_data.txt"
 
 
 def yield_lines(filename: str) -> typing.Iterator[str]:
