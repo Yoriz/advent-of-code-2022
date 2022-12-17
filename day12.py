@@ -3,7 +3,10 @@ import dataclasses
 import enum
 import typing
 
-FILENAME = "day12_data.txt"
+TEST_FILENAME = (
+    r"C:\Users\Dave\Documents\VsWorkspace\advent_of_code\year2022\day12_testdata.txt"
+)
+FILENAME = r"C:\Users\Dave\Documents\VsWorkspace\advent_of_code\year2022\day12_data.txt"
 
 
 def yield_lines(filename: str) -> typing.Iterator[str]:
@@ -90,6 +93,15 @@ class HeightMap:
         location_letter = self.grid_location_letter(location)
         return elevation_score(location_letter)
 
+    def letter_locations(self, letter: str) -> list[Location]:
+        locations: list[Location] = []
+        for y_index, row in enumerate(self.grid):
+            for x_index, elevation in enumerate(row):
+                if elevation != letter:
+                    continue
+                locations.append(Location(x_index, y_index))
+        return locations
+
     @property
     def max_x_location(self) -> int:
         return len(self.grid[0]) - 1
@@ -130,15 +142,17 @@ def construct_shortest_path(
     return path[::-1]
 
 
-def find_shortest_path(height_map: HeightMap) -> typing.Optional[list[Location]]:
+def find_shortest_path(
+    height_map: HeightMap, start_location: Location
+) -> typing.Optional[list[Location]]:
     visited_locations: set[Location] = set()
-    deque = collections.deque((height_map.start_location,))
+    deque = collections.deque((start_location,))
     predecessor: dict[Location, Location] = {}
     while deque:
         current_location = deque.popleft()
         if current_location == height_map.end_location:
             return construct_shortest_path(
-                current_location, height_map.start_location, predecessor
+                current_location, start_location, predecessor
             )
 
         if current_location in visited_locations:
@@ -168,18 +182,27 @@ def find_shortest_path(height_map: HeightMap) -> typing.Optional[list[Location]]
 def part1(filename: str) -> None:
     lines = yield_lines(filename)
     heightmap = create_heightmap(lines)
-    shortest_path = find_shortest_path(heightmap)
+    shortest_path = find_shortest_path(heightmap, heightmap.start_location)
     if shortest_path:
         print(len(shortest_path) - 1)
 
 
 def part2(filename: str) -> None:
     lines = yield_lines(filename)
+    heightmap = create_heightmap(lines)
+    start_locations = heightmap.letter_locations("a")
+    start_locations.extend((heightmap.start_location,))
+    shortest_paths: list[int] = []
+    for start_location in start_locations:
+        shortest_path = find_shortest_path(heightmap, start_location)
+        if shortest_path:
+            shortest_paths.append(len(shortest_path) - 1)
+    print(min(shortest_paths))
 
 
 def main():
     part1(FILENAME)
-    # part2(TEST_FILENAME)
+    part2(FILENAME)
 
 
 if __name__ == "__main__":
