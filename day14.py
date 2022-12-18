@@ -100,9 +100,10 @@ class Grid:
 
         return contained_location
 
-    def add_contained_grid(self, grid: "Grid") -> None:
-        for location in (grid.start_location, grid.end_location):
-            self.resize_to_contain_location(location)
+    def add_contained_grid(self, grid: "Grid", resize_grid: bool = True) -> None:
+        if resize_grid:
+            for location in (grid.start_location, grid.end_location):
+                self.resize_to_contain_location(location)
         self.contained_grids.append(grid)
 
     def add_individual_location(
@@ -112,16 +113,35 @@ class Grid:
             self.resize_to_contain_location(location)
         self.individual_locations.append(location)
 
-    def display_str(self) -> str:
+    def display_str(
+        self,
+        display_start_location: typing.Optional[Location] = None,
+        display_end_location: typing.Optional[Location] = None,
+    ) -> str:
+        start_location = display_start_location or self.start_location
+        end_location = display_end_location or self.end_location
         rows: list[str] = []
-        for y_index in range(self.start_location.y, self.end_location.y + 1):
+        for y_index in range(start_location.y, end_location.y + 1):
             row: list[str] = []
-            for x_index in range(self.start_location.x, self.end_location.x + 1):
+            for x_index in range(start_location.x, end_location.x + 1):
                 location = self.grids_location(Location(x_index, y_index))
                 if location.type:
                     row.append(location.type.value)
             rows.append("".join(row))
         return "\n".join(rows)
+
+
+@dataclasses.dataclass
+class InfinateXGrid(Grid):
+    def has_location(self, location: Location) -> bool:
+        return all(
+            (
+                True,
+                True,
+                location.y > self.start_location.y - 1,
+                location.y < self.end_location.y + 1,
+            )
+        )
 
 
 def create_rock_grids(lines: typing.Iterator[str]) -> typing.Iterator[Grid]:
@@ -183,11 +203,36 @@ def part1(filename: str) -> None:
 
 def part2(filename: str) -> None:
     lines = yield_lines(filename)
+    rock_grids = create_rock_grids(lines)
+
+    sand_entrance_location = Location(500, 0, LocationType.SAND_ENTRANCE)
+    cave_grid = InfinateXGrid(
+        sand_entrance_location, sand_entrance_location, LocationType.AIR
+    )
+    cave_grid.add_individual_location(sand_entrance_location, True)
+    for rock_grid in rock_grids:
+        cave_grid.add_contained_grid(rock_grid)
+    max_y_location = cave_grid.end_location.y
+    max_y_location += 2
+    cave_grid.end_location = Location(cave_grid.end_location.x, max_y_location)
+    infiate_x_grid = InfinateXGrid(
+        Location(0, max_y_location), Location(0, max_y_location), LocationType.ROCK
+    )
+    cave_grid.add_contained_grid(infiate_x_grid, False)
+    count = 0
+    for count in itertools.count(1):
+        print(count)
+        location = add_unit_of_sand(cave_grid)
+        if location.x == 500 and location.y == 0:
+            break
+
+    # print(cave_grid.display_str(Location(488, 0), Location(512, 12)))
+    print(f"Units of sand: {count}")
 
 
 def main():
     part1(FILENAME)
-    # part2(FILENAME)
+    part2(FILENAME)
 
 
 if __name__ == "__main__":
